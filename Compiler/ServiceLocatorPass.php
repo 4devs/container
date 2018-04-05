@@ -50,13 +50,23 @@ class ServiceLocatorPass implements CompilerPassInterface
         foreach ($container->findTaggedServiceIds($this->tag) as $serviceId => $tags) {
             $serviceArgument = new ServiceClosureArgument(new Reference($serviceId));
             foreach ($tags as $taggedAttr) {
-                $id = isset($taggedAttr[$this->attrName]) ? $this->resolveParam($container, $taggedAttr[$this->attrName]) : $serviceId;
-                $factories[$id] = $serviceArgument;
+                $factories[$this->resolveServiceId($container, $taggedAttr) ?? $serviceId] = $serviceArgument;
             }
         }
         $container
             ->getDefinition($this->serviceId)
             ->setArgument('$factories', $factories)
         ;
+    }
+
+    /**
+     * @param ContainerBuilder $container
+     * @param array            $attr
+     *
+     * @return null|string
+     */
+    protected function resolveServiceId(ContainerBuilder $container, array $attr): ?string
+    {
+        return isset($attr[$this->attrName]) ? $this->resolveParam($container, $attr[$this->attrName]) : null;
     }
 }
